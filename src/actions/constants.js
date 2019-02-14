@@ -1,4 +1,5 @@
-// TAX
+// RATES
 export const GET_RATES = "GET_RATES";
 
 // WALLET
+export const EXCHANGE_VALUES = "EXCHANGE_VALUES";
