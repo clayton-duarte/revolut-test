@@ -2,11 +2,11 @@ import { combineReducers, createStore, applyMiddleware } from "redux";
 import thunk from "redux-thunk";
 
 import wallet from "./wallet";
-import tax from "./tax";
+import rates from "./rates";
 
 const appReducer = combineReducers({
 	wallet,
-	tax
+	rates
 });
 
 export default createStore(appReducer, applyMiddleware(thunk));
