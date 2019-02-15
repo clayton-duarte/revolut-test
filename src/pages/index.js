@@ -13,8 +13,17 @@ const Container = styled.main`
 `;
 
 class Home extends Component {
+	startPooling = () => {
+		const poolTask = setInterval(this.props.getRates, 10000);
+		this.setState({ poolTask }, this.props.getRates);
+	};
+
 	componentDidMount() {
-		this.props.getRates();
+		this.startPooling();
+	}
+
+	componentWillUnmount() {
+		clearInterval(this.state.poolTask);
 	}
 
 	render() {
