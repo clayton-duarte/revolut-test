@@ -1,16 +1,90 @@
 import styled from "styled-components/macro";
 import { bindActionCreators } from "redux";
-import Input from "react-currency-input";
+import CurrencyInput from "react-currency-input";
 import React, { Component } from "react";
 import { connect } from "react-redux";
 
 import { exchangeValues } from "../actions/wallet";
 import Text from "./Text";
+import Row from "./Row";
 import Col from "./Col";
 
-const Submit = styled.button``;
+const Submit = styled.button`
+	border-radius: ${props => props.theme.radius};
+	background: ${props => props.theme.primary};
+	box-shadow: ${props => props.theme.shadow};
+	padding: ${props => props.theme.padding};
+	color: ${props => props.theme.bgColor};
+	margin: ${props => props.theme.margin};
+	transition: 0.3s ease;
+	font-weight: bold;
+	display: block;
+	/* width: 100%; */
+	border: 0;
+	&:disabled {
+		filter: grayscale(100%);
+		pointer-events: none;
+	}
+`;
 
-const Label = styled.span``;
+const Aligner = styled(Row)`
+	justify-content: space-between;
+	align-items: center;
+`;
+
+const Wrapper = styled(Col)`
+	border-radius: ${props => props.theme.radius};
+	background: ${props => props.theme.bgColor};
+	box-shadow: ${props => props.theme.shadow};
+	padding: ${props => props.theme.padding};
+	margin: ${props => props.theme.margin};
+`;
+
+const Title = styled(Text)`
+	color: ${props => props.theme.primary};
+	font-weight: bold;
+`;
+
+const Input = styled(CurrencyInput)`
+	border: 0.125rem solid ${props => props.theme.secondary};
+	border-radius: ${props => props.theme.radius};
+	font-size: ${props => props.theme.fontSize};
+	padding: ${props => props.theme.padding};
+	color: ${props => props.theme.primary};
+	transition: 0.3s ease;
+	margin: 0.5rem 0;
+	&:focus {
+		border: 0.125rem solid ${props => props.theme.primary};
+		outline: transparent;
+	}
+`;
+
+Input.defaultProps = {
+	thousandSeparator: ""
+};
+
+const Pocket = styled.span`
+	color: ${({ warn, theme }) => (warn ? theme.warn : theme.primary)};
+	font-family: ${props => props.theme.fontFamily};
+	transition: 0.3s ease;
+	font-size: 0.85rem;
+	font-weight: bold;
+`;
+
+const Label = styled.span`
+	background: ${({ theme, selected }) =>
+		selected ? theme.secondary : theme.bgColor};
+	color: ${({ theme, selected }) =>
+		selected ? theme.bgColor : theme.secondary};
+	border: 0.125rem solid ${props => props.theme.secondary};
+	font-family: ${props => props.theme.fontFamily};
+	border-radius: ${props => props.theme.radius};
+	padding: 0.25rem 0.5rem;
+	transition: 0.3s ease;
+	font-size: 0.75rem;
+	font-weight: bold;
+	margin: 0.25rem 0;
+`;
 
 class Exchanger extends Component {
 	state = {
@@ -23,7 +97,7 @@ class Exchanger extends Component {
 
 	calcRate = (from, to) => {
 		const { rates } = this.props;
-		return rates[from] / rates[to];
+		return rates[to] / rates[from];
 	};
 
 	handleClickFrom = symbol => {
@@ -45,17 +119,23 @@ class Exchanger extends Component {
 	};
 
 	handleChangeFrom = e => {
+		const { wallet } = this.props;
+		const { from } = this.state;
 		const { value } = e.target;
 		this.setState(prevState => ({
-			fromValue: value,
-			toValue: (value * prevState.rate).toFixed(2)
+			toValue: (value * prevState.rate).toFixed(2),
+			error: value > wallet[from],
+			fromValue: value
 		}));
 	};
 
 	handleChangeTo = e => {
+		const { wallet } = this.props;
+		const { from } = this.state;
 		const { value } = e.target;
 		this.setState(prevState => ({
 			fromValue: (value * prevState.rate).toFixed(2),
+			error: value * prevState.rate > wallet[from],
 			toValue: value
 		}));
 	};
@@ -63,51 +143,67 @@ class Exchanger extends Component {
 	handleSubmit = e => {
 		e.preventDefault();
 		this.props.exchangeValues(this.state);
-		this.setState(prevState => ({
+		this.setState({
 			fromValue: 0,
 			toValue: 0
-		}));
+		});
 	};
 
 	render() {
-		const { rate, from, to, fromValue, toValue } = this.state;
-		const { rates } = this.props;
+		const { fromValue, error, toValue, from, rate, to } = this.state;
+		const { rates, wallet } = this.props;
 		const symbols = Object.keys(rates);
 		return (
-			<Col css="padding: 1rem 1.5rem">
-				<Text>
-					<strong>Rate:</strong> {rate.toFixed(6)} {from}/{to}
-				</Text>
-				<br />
-				<Text>
-					From:{" "}
+			<>
+				<Wrapper>
+					{/* SHOW RATE */}
+					<Aligner css="justify-content: space-between">
+						<Title>Rate:</Title>
+						<Text>
+							{rate.toFixed(5)}{" "}
+							<strong>
+								{from}/{to}
+							</strong>
+						</Text>
+					</Aligner>
+					<br />
+					{/* FIRST CURRENCY */}
+					<Aligner>
+						<Title>From:</Title>
+						{symbols.map(symbol => (
+							<Label
+								selected={from === symbol}
+								key={`from-${symbol}`}
+								onClick={() => this.handleClickFrom(symbol)}
+							>
+								{symbol}
+							</Label>
+						))}
+					</Aligner>
 					<Input value={fromValue} onChangeEvent={this.handleChangeFrom} />
+					<Pocket warn={error}>
+						You have {wallet[from].toFixed(2)} {from} available
+					</Pocket>
 					<br />
-					{symbols.map(symbol => (
-						<Label
-							key={`from-${symbol}`}
-							onClick={() => this.handleClickFrom(symbol)}
-						>
-							{symbol}{" "}
-						</Label>
-					))}
-				</Text>
-				<br />
-				<Text>
-					To: <Input value={toValue} onChangeEvent={this.handleChangeTo} />
-					<br />
-					{symbols.map(symbol => (
-						<Label
-							key={`to-${symbol}`}
-							onClick={() => this.handleClickTo(symbol)}
-						>
-							{symbol}{" "}
-						</Label>
-					))}
-				</Text>
-				<br />
-				<Submit onClick={this.handleSubmit}>Exchange</Submit>
-			</Col>
+					{/* SECOND CURRENCY */}
+					<Aligner>
+						<Title>To:</Title>
+						{symbols.map(symbol => (
+							<Label
+								selected={to === symbol}
+								key={`to-${symbol}`}
+								onClick={() => this.handleClickTo(symbol)}
+							>
+								{symbol}
+							</Label>
+						))}
+					</Aligner>
+					<Input value={toValue} onChangeEvent={this.handleChangeTo} />
+				</Wrapper>
+				<Submit disabled={error} onClick={this.handleSubmit}>
+					Exchange
+				</Submit>
+			</>
 		);
 	}
 }

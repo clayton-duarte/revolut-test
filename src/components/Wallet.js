@@ -1,18 +1,30 @@
-import "styled-components/macro";
+import styled from "styled-components/macro";
 import React from "react";
 
 import Text from "./Text";
 import Row from "./Row";
 
+const Header = styled(Row)`
+	border-radius: ${props => props.theme.radius};
+	background: ${props => props.theme.bgColor};
+	box-shadow: ${props => props.theme.shadow};
+	padding: ${props => props.theme.padding};
+	margin: ${props => props.theme.margin};
+	justify-content: space-between;
+`;
+
+const Title = styled(Text)`
+	color: ${props => props.theme.primary};
+	font-weight: bold;
+`;
+
 export default ({ wallet }) => (
-	<Row css="justify-content: space-between; padding: 1rem 1.5rem">
-		<Text>
-			<strong>My Wallet:</strong>
-		</Text>
+	<Header>
+		<Title>My Wallet:</Title>
 		{Object.keys(wallet).map(symbol => (
-			<Text key={`wallet-${symbol}`}>
+			<Text css="text-align: right" key={`wallet-${symbol}`}>
 				{wallet[symbol].toFixed(2)} <strong>{symbol}</strong>
 			</Text>
 		))}
-	</Row>
+	</Header>
 );
